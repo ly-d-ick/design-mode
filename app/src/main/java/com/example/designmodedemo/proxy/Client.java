@@ -1,8 +1,11 @@
 package com.example.designmodedemo.proxy;
 
 import com.example.designmodedemo.proxy.dynamicproxy.Company;
+import com.example.designmodedemo.proxy.dynamicproxy.ProxyUtils;
 import com.example.designmodedemo.proxy.staticproxy.ASaler;
 import com.example.designmodedemo.proxy.staticproxy.BSaler;
+
+import java.lang.reflect.Method;
 
 public class Client {
 
@@ -36,6 +39,13 @@ public class Client {
         BToolsFactory employee2 = (BToolsFactory) company.getProxyInstance();
         employee2.sellBTools(0.5f);
 
+        ProxyUtils.generateClassFile(aaFactory.getClass(), employee1.getClass().getSimpleName());
+        ProxyUtils.generateClassFile(bbFactory.getClass(), employee2.getClass().getSimpleName());
+        Method[] methods = aaFactory.getClass().getMethods();
+        for (Method method: methods) {
+            System.out.println(method.getName());
+        }
     }
 
 }
+
