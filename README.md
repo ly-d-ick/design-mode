@@ -1,5 +1,6 @@
 # 设计模式
 ## [1.代理模式](#proxy)
+## [2.单例模式](#singleton)
 
 # <a name="proxy">代理模式</a>
 > 给某一个对象提供一个代理对象，并由代理对象控制对原对象的引用。
@@ -369,3 +370,174 @@ employee2.sellBTools(0.5f);
 ----
 ### 以上为动态代理的全部实现。
 
+# <a name="singleton">单例模式</a>
+> 确保一个类只有一个实例，而且自行实例化并向整个系统提供这个实例。
+## 特征
+- #### 构造方法一般不外开放
+- #### 通过一个静态方法或枚举返回单例类的对象
+- #### 注意多线程的场景
+- #### 注意单例类对象在反序列化时不会重新创建对象
+
+---
+
+## 单例类的实现
+### 1.懒汉式单例
+```
+    // 1.懒汉式单例
+    static class Singleton1 {
+
+        // 私有静态变量
+        private static Singleton1 mInstance = null;
+
+        // 私有构造方法
+        private Singleton1() {
+            System.out.println("懒汉式单例");
+        }
+
+        // 暴露公有静态方法
+        public static Singleton1 getInstance() {
+            if (mInstance == null) {
+                mInstance = new Singleton1();
+            }
+            return mInstance;
+        }
+    }
+```
+#### 以上是简单的懒汉式单例实现，如果单例类中有作网络请求、缓存操作或线程池策略等耗时操作，会创建多个不同的实例，以下稍作改动，模拟耗时操作。
+#### main()中添加
+```
+        for (int i = 0; i < 100; i++) {
+            final int index = i;
+            new Thread(){
+                @Override
+                public void run() {
+                    System.out.println("index = " + index + ", instance: " + Singleton1.getInstance());
+                }
+            }.start();
+        }
+```
+#### getInstance()中添加，再运行结果
+```
+try {
+     Thread.sleep(500);
+} catch (InterruptedException e) {
+    e.printStackTrace();
+}
+
+---------- 节选结果 ----------
+index = 1, instance: com.example.designmodedemo.singleton.SingletonMode$Singleton1@6b52350c
+懒汉式单例
+懒汉式单例
+懒汉式单例
+index = 7, instance: com.example.designmodedemo.singleton.SingletonMode$Singleton1@4a1a7268
+懒汉式单例
+懒汉式单例
+index = 9, instance: com.example.designmodedemo.singleton.SingletonMode$Singleton1@ce407e7
+懒汉式单例
+懒汉式单例
+懒汉式单例
+index = 11, instance: com.example.designmodedemo.singleton.SingletonMode$Singleton1@59ac37b1
+index = 8, instance: com.example.designmodedemo.singleton.SingletonMode$Singleton1@1dca18a4
+index = 13, instance: com.example.designmodedemo.singleton.SingletonMode$Singleton1@5795dfe4
+index = 10, instance: com.example.designmodedemo.singleton.SingletonMode$Singleton1@7898c39
+index = 6, instance: com.example.designmodedemo.singleton.SingletonMode$Singleton1@fb49a4f
+index = 5, instance: com.example.designmodedemo.singleton.SingletonMode$Singleton1@47c48106
+index = 3, instance: com.example.designmodedemo.singleton.SingletonMode$Singleton1@6fada00f
+```
+#### 输出的哈希地址不相等说明对象多次创建。想要线程安全，需要加synchronized关键字。
+#### 1、直接锁方法。锁方法的缺陷是同步锁粒度太大，耗性能
+#### 2、双重校验DCL。同步锁粒度小很多。<u>由于JVM有指令重排特殊性，会导致双重校验失效，静态变量需要添加volatile关键字</u>
+```
+private volatile static Singleton1 sInstance = null;
+
+public static Singleton1 getInstance() {
+    if (sInstance == null) {// 第一重校验
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        synchronized(Singleton1.class) {
+            if (sInstance == null) {// 第二重校验
+                sInstance = new Singleton1();
+            }
+        }
+    }
+    return sInstance;
+}
+```
+
+
+### 2.饿汉式单例(线程安全)
+```
+    static class Singleton2 {
+
+        private static Singleton2 sInstance = new Singleton2();
+
+        private Singleton2() {}
+
+        public static Singleton2 getInstance() {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return sInstance;
+        }
+    }
+```
+
+### 3.静态内部类单例(线程安全)
+```
+static class Singleton3 {
+
+    private Singleton3() {}
+
+    private static class Holder {
+        private static final Singleton3 INSTANCE = new Singleton3();
+    }
+
+    // 延时加载
+    public final static Singleton3 getInstance() {
+        return Holder.INSTANCE;
+    }
+}
+```
+
+### 4.使用枚举(线程安全)
+```
+static class Singleton4 {}
+
+enum EnumDemo {
+    INSTANCE;
+
+    private Singleton4 instance;
+
+    EnumDemo() {
+        instance = new Singleton4();
+    }
+
+    public Singleton4 getInstance() {
+        return instance;
+    }
+}
+```
+
+### 4.使用容器，如源码中类SystemServiceRegistry
+```
+static class Singleton5 {}
+
+static class SingletonManager {
+    private static Map<String, Object> map = new HashMap<>();
+
+    public static void putClass(String key, Object instace) {
+        if (!map.containsKey(key)) {
+            map.put(key, instace);
+        }
+    }
+
+    public static Object getClass(String key) {
+        return map.get(key);
+    }
+}
+```
