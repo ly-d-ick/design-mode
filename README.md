@@ -237,7 +237,7 @@ employee2.sellBTools(0.5f);
 - ### 实现原理
 #### **注：Android Studio内嵌JDK在原生JDK基础上有所改动，以下展示的是原生JDK源码**
 ##### 通过调试可以发现，代理对象的类名与其他有区别
-![1](https://github.com/ly-d-ick/design-mode/tree/master/app/src/main/res/drawable/1.png)
+![1](https://github.com/ly-d-ick/design-mode/blob/master/app/image/1.png)
 ##### 查看Proxy#newProxyInstance，以下节选源码
 ```
         Class<?> cl = getProxyClass0(loader, intfs);
@@ -355,16 +355,16 @@ employee2.sellBTools(0.5f);
     }
 ```
 ##### 通过上述代码可知，WeakCahce#get先判断有没有动态代理类缓存，有直接从缓存取，没有就进行缓存。Object subKey = Objects.requireNonNull(subKeyFactory.apply(key, parameter));这一行是创建代理类的关键代码，点击BiFunction#apply，是一个泛型方法，通过查看哪些类实现了这个接口，然后回到Proxy类的ProxyClassFactory
-![2](85B8F566C9F94695965AAF07A7E2F01C)
+![2](https://github.com/ly-d-ick/design-mode/blob/master/app/image/2.png)
 ##### 一进来就发现，代理类的类名前缀，继续往下翻
-![3](E4F26E6F97E54B299AFC53B7F4B7C569)
+![3](https://github.com/ly-d-ick/design-mode/blob/master/app/image/3.png)
 ##### 序号通过CAS操作生成，Proxy#defineClass0是一个本地方法，关键代码为byte[] proxyClassFile = ProxyGenerator.generateProxyClass(proxyName, interfaces, accessFlags)，生成一个代理类字节码数组。接下来，调用ProxyGenerator#generateProxyClass获取已经实例过的代理类的byte数组，然后通过I/O得到class文件，再反编译瞧瞧代理类的内容。
 
-![4](8744C4043DF44787A7497B2D4C40D0E3)
+![4](https://github.com/ly-d-ick/design-mode/blob/master/app/image/4.png)
 ##### 类$Proxy0是Proxy的子类，而且已经实现了抽象对象的接口，继续往下翻
 
-![5](FC0999232E104B92B784A6EF8BF80130)
-![6](09C27CA6358F485CB5D22281EC2B4FFE)
+![5](https://github.com/ly-d-ick/design-mode/blob/master/app/image/5.png)
+![6](https://github.com/ly-d-ick/design-mode/blob/master/app/image/6.png)
 ##### 变量h是Proxy类中的InvocationHandler对象，这也说明了为什么动态代理中实现InvocationHandler接口原因；变量m3是真实对象实现接口的方法。
 ----
 ### 以上为动态代理的全部实现。
